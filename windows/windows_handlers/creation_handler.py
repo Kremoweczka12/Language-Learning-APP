@@ -167,10 +167,14 @@ class DataManagementView(BaseHandler):
             Const.main_window.load_raw_button.deleteLater()
         except RuntimeError:
             print("already destroyed")
-        tabs = pd.ExcelFile(excel_file_dir).sheet_names
-        print(tabs)
+
         # add worksheet_choice
-        df = pd.read_excel(excel_file_dir, tabs[0])
+        if excel_file_dir.endswith(".xlsx"):
+            tabs = pd.ExcelFile(excel_file_dir).sheet_names
+            print(tabs)
+            df = pd.read_excel(excel_file_dir, tabs[0])
+        else:
+            df = pd.read_csv(excel_file_dir)
         if df.size == 0:
             return
 
@@ -239,6 +243,7 @@ class DataManagementView(BaseHandler):
             " 'apple', 'ringo' , 'りんご' they all represent 'apple' in japanese.")
 
         # buttons label layout
+        Const.main_window.tool_tip.setStyleSheet("color: rgb(255, 255, 255);")
         Const.main_window.buttons_in_info_layout_box = QHBoxLayout(Const.main_window)
         Const.main_window.task_attributes.append(Const.main_window.buttons_in_info_layout_box)
         Const.main_window.return_button = LeftMenuButton("Main menu", Const.main_window)

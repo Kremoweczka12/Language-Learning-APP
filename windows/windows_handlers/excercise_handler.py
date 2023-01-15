@@ -11,7 +11,6 @@ from utils.CONSTANTS import StyleSheets
 from utils.global_access_classes import Const, LeftMenuButton, play_safe_sound
 from windows.windows_handlers.base_handler import BaseHandler
 from windows.windows_handlers.creation_handler import FirstViewWindowHandler
-from windows.windows_handlers.data_loading_handler import LoadedDataWindowHandler
 
 
 class ExerciseBaseHandler(BaseHandler):
@@ -222,13 +221,6 @@ class FallingWindowsHandler(ExerciseBaseHandler):
         for button in cls.buttons:
             button.hide()
 
-        # Const.main_window.you_won_label = QLabel(Const.main_window)
-        # Const.main_window.you_won_label.setText("You have won!")
-        # Const.main_window.you_won_label.setAlignment(Qt.AlignCenter)
-        # Const.main_window.you_won_label.setStyleSheet("color: rgb(255, 255, 255);")
-        # Const.main_window.right_side_boxes.addWidget(Const.main_window.you_won_label)
-        # Const.main_window.task_attributes.append(Const.main_window.you_won_label)
-
         cls.is_game_won = True
         Const.main_window.next_batch_button.hide()
 
@@ -280,8 +272,6 @@ class FallingWindowsHandler(ExerciseBaseHandler):
             buttons.append(button)
             anims.append(anim)
 
-        # Const.main_window.task_attributes = [*buttons,
-        #                                      *anims]
         cls.buttons = buttons
         cls.anims = anims
         cls.select_records_for_iter()
@@ -303,7 +293,6 @@ class FallingWindowsHandler(ExerciseBaseHandler):
         for anim in cls.anims:
             anim.stop()
         if len(cls.unused) == 0:
-            print("end of batch")
 
             Const.current_batch += 1
 
@@ -453,13 +442,6 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
         for button in cls.buttons:
             button.hide()
 
-        # Const.main_window.you_won_label = QLabel(Const.main_window)
-        # Const.main_window.you_won_label.setText("You have won!")
-        # Const.main_window.you_won_label.setAlignment(Qt.AlignCenter)
-        # Const.main_window.you_won_label.setStyleSheet("color: rgb(255, 255, 255);")
-        # Const.main_window.right_side_boxes.addWidget(Const.main_window.you_won_label)
-        # Const.main_window.task_attributes.append(Const.main_window.you_won_label)
-
         cls.is_game_won = True
         Const.main_window.next_batch_button.hide()
 
@@ -468,7 +450,6 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
         if asdict(cls.currently_correct)[cls.compare_from] == button.text():
 
             print("correct!!")
-
 
             playsound.playsound("sounds/correct.wav", False)
             # cls.select_records_for_iter()
@@ -482,7 +463,7 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
             cls.failed_words.append(cls.currently_correct.ID)
             cls.failed_words = list(set(cls.failed_words))
             print(cls.failed_words)
-            print("FALSE")
+            print("fail")
             # cls.select_records_for_iter()
 
         Const.main_window.next_word_button.show()
