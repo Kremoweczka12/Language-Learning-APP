@@ -69,7 +69,7 @@ class Config:
         self.interesting_columns = list(set(self.interesting_columns))
 
 
-class LeftMenuButton(QPushButton):
+class BasicMenuButton(QPushButton):
     def __init__(self, text: str, parent):
         super().__init__(text, parent)
 
@@ -108,6 +108,8 @@ def play_safe_sound(is_sentence=False):
         playsound("sounds/failure.mp3", False)
 
         error_msg = f"are you sure {path} is a proper path to proper file?"
+        if not path:
+            error_msg = "There is no sound folder connected to your config"
         dlg = ErrorDialog(error_msg)
         dlg.setWindowTitle("ERROR")
         dlg.exec_()

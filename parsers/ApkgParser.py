@@ -1,5 +1,3 @@
-from dataclasses import make_dataclass
-
 from parsers.BaseParser import BaseParser
 from utils.global_access_classes import Const, Config
 
@@ -28,14 +26,6 @@ class ApkgGrandParser(BaseParser):
         self.headers_to_numbers = {}
         self.config = config
         self.dataset_name = config.absolute_path_to_file
-
-        # with Apkg(self.dataset_name,) as apkg:
-        #     print(apkg)
-        # with open(self.dataset_name, newline='', encoding="utf8") as csvfile:
-        #     reader = csv.DictReader(csvfile)
-        #     self._get_numbers_for_headers(reader.fieldnames)
-        #     self.RecordClass = make_dataclass("Record", self.headers)  # , headers
-        #     self.all_records = self._add_records(reader)
 
     def _add_records(self, reader):
         records = []

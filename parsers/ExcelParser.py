@@ -1,4 +1,4 @@
-import itertools
+
 from dataclasses import make_dataclass
 
 from openpyxl import load_workbook

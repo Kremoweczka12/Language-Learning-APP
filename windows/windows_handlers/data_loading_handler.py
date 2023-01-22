@@ -8,15 +8,16 @@ from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QSize
     QListWidget, QHBoxLayout, QWidget, QRadioButton, QLabel, QSpinBox, QPushButton, QListView
 from playsound import playsound
 
+from error_handling.basic_error_window import display_error_window
 from utils.CONSTANTS import UFTIcons
-from utils.global_access_classes import Const, LeftMenuButton, ErrorDialog
+from utils.global_access_classes import Const, BasicMenuButton, ErrorDialog
 from windows.windows_handlers.base_handler import BaseHandler
 
 
 class LoadedDataWindowHandler(BaseHandler):
     @classmethod
     def initiate_task(cls, main_menu_view_handler):
-        print(Const.main_window.main_menu_box)
+
         try:
 
             Const.main_window.new_config_button.deleteLater()
@@ -25,42 +26,41 @@ class LoadedDataWindowHandler(BaseHandler):
         except RuntimeError:
             print("already destroyed")
 
-        # Const.parser.all_records
         Const.main_window.currently_used_records = Const.parser.all_records
         Const.main_window.all_selected_records = []
         Const.main_window.preview_table = QTableWidget(Const.main_window)
-        # Const.main_window.preview_table.cellClicked.connect(cls.append_to_currently_used())
+
         Const.main_window.task_attributes.append(Const.main_window.preview_table)
 
         cls.show_me_all()
         Const.main_window.preview_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # Const.main_window.data_box = QVBoxLayout(Const.main_window)
+
         Const.main_window.data_box = QVBoxLayout(Const.main_window)
 
         Const.main_window.preview_table.setGeometry(0, 0, 650, 350)
 
         # show_all_button
-        Const.main_window.show_all_button = LeftMenuButton("Display All", Const.main_window)
+        Const.main_window.show_all_button = BasicMenuButton("Display All", Const.main_window)
         Const.main_window.show_all_button.setGeometry(10, 360, 160, 60)
         Const.main_window.show_all_button.clicked.connect(lambda: cls.show_me_all())
 
         # show_only_selected
-        Const.main_window.show_only_selected = LeftMenuButton("Show all selected", Const.main_window)
+        Const.main_window.show_only_selected = BasicMenuButton("Show all selected", Const.main_window)
         Const.main_window.show_only_selected.setGeometry(180, 360, 160, 60)
         Const.main_window.show_only_selected.clicked.connect(lambda: cls.show_only_selected(selected=True))
 
         # show_only_deselected
-        Const.main_window.show_only_deselected = LeftMenuButton("Show all deselected", Const.main_window)
+        Const.main_window.show_only_deselected = BasicMenuButton("Show all deselected", Const.main_window)
         Const.main_window.show_only_deselected.setGeometry(350, 360, 160, 60)
         Const.main_window.show_only_deselected.clicked.connect(lambda: cls.show_only_selected(selected=False))
 
         # select_all_displayed
-        Const.main_window.select_displayed = LeftMenuButton("Select displayed", Const.main_window)
+        Const.main_window.select_displayed = BasicMenuButton("Select displayed", Const.main_window)
         Const.main_window.select_displayed.setGeometry(10, 430, 160, 60)
         Const.main_window.select_displayed.clicked.connect(lambda: cls.select_all_in_current_view())
 
         # deselect_all_displayed
-        Const.main_window.deselect_displayed = LeftMenuButton("Deselect displayed", Const.main_window)
+        Const.main_window.deselect_displayed = BasicMenuButton("Deselect displayed", Const.main_window)
         Const.main_window.deselect_displayed.setGeometry(180, 430, 160, 60)
         Const.main_window.deselect_displayed.clicked.connect(lambda: cls.select_all_in_current_view(deselect=True))
 
@@ -75,7 +75,6 @@ class LoadedDataWindowHandler(BaseHandler):
         Const.main_window.filter_list_widget = QListWidget(Const.main_window)
         filter_by = [header[0] for header in Const.parser.headers]
         if Const.parser.config.filters_columns:
-            print(Const.parser.config.filters_columns)
             filter_by = Const.parser.config.filters_columns
 
         Const.main_window.filter_list_widget.insertItem(0, "NONE")
@@ -98,7 +97,7 @@ class LoadedDataWindowHandler(BaseHandler):
         Const.main_window.filter_preview_table = QTableWidget(Const.main_window)
         Const.main_window.filter_preview_table.setGeometry(700, size, 160, 200)
         Const.main_window.filter_preview_table.hide()
-        Const.main_window.apply_filters_push_button = LeftMenuButton("Apply Filters", Const.main_window)
+        Const.main_window.apply_filters_push_button = BasicMenuButton("Apply Filters", Const.main_window)
         size += 200
         Const.main_window.apply_filters_push_button.setGeometry(700, size, 160, 50)
         Const.main_window.apply_filters_push_button.clicked.connect(lambda: cls.apply_filter())
@@ -123,22 +122,26 @@ class LoadedDataWindowHandler(BaseHandler):
         Const.main_window.search_bar.setStyleSheet("color: rgb(255, 255, 255);")
         Const.main_window.prev_search_value = ""
 
-        Const.main_window.save_current_view_button = LeftMenuButton("Save current view", Const.main_window)
-        Const.main_window.save_current_view_button.setGeometry(900, 20, 150, 60)
-        Const.main_window.save_current_view_button.clicked.connect(lambda: cls.save_view())
-        Const.main_window.data_box.addWidget(Const.main_window.save_current_view_button)
-
-        Const.main_window.load_view_button = LeftMenuButton("Load view", Const.main_window)
-        Const.main_window.load_view_button.setGeometry(900, 90, 150, 60)
-        Const.main_window.load_view_button.clicked.connect(lambda: cls.load_view())
-        Const.main_window.data_box.addWidget(Const.main_window.load_view_button)
-
-        Const.main_window.delete_view_button = LeftMenuButton("Delete view", Const.main_window)
-        Const.main_window.delete_view_button.setGeometry(900, 160, 150, 60)
-        Const.main_window.delete_view_button.clicked.connect(lambda: cls.delete_view())
-        Const.main_window.data_box.addWidget(Const.main_window.delete_view_button)
-
         config = Const.parser.config
+
+        if hasattr(config, "json_file"):
+            Const.main_window.save_current_view_button = BasicMenuButton("Save current view", Const.main_window)
+            Const.main_window.save_current_view_button.setGeometry(900, 20, 150, 60)
+            Const.main_window.save_current_view_button.clicked.connect(lambda: cls.save_view())
+
+            Const.main_window.load_view_button = BasicMenuButton("Load view", Const.main_window)
+            Const.main_window.load_view_button.setGeometry(900, 90, 150, 60)
+            Const.main_window.load_view_button.clicked.connect(lambda: cls.load_view())
+            Const.main_window.data_box.addWidget(Const.main_window.load_view_button)
+
+            Const.main_window.delete_view_button = BasicMenuButton("Delete view", Const.main_window)
+            Const.main_window.delete_view_button.setGeometry(900, 160, 150, 60)
+            Const.main_window.delete_view_button.clicked.connect(lambda: cls.delete_view())
+
+            Const.main_window.data_box.addWidget(Const.main_window.save_current_view_button)
+            Const.main_window.data_box.addWidget(Const.main_window.load_view_button)
+            Const.main_window.data_box.addWidget(Const.main_window.delete_view_button)
+
         # view list
 
         Const.main_window.view_name_line_edit = QLineEdit()
@@ -158,8 +161,6 @@ class LoadedDataWindowHandler(BaseHandler):
         cls.refresh_views_list()
 
         ###/viewlist
-
-        Const.main_window.data_box.addWidget(Const.main_window.load_view_button)
 
         Const.main_window.data_box.addWidget(Const.main_window.view_name_line_edit)
 
@@ -196,21 +197,21 @@ class LoadedDataWindowHandler(BaseHandler):
 
         Const.main_window.verticalLayout_2.addWidget(Const.main_window.radioButton_2)
 
-        Const.main_window.radioButton_3 = QRadioButton(Const.main_window)
-        Const.main_window.radioButton_3.setObjectName("radioButton_3")
-        Const.main_window.radioButton_3.setGeometry(QRect(20, 600, 100, 50))
-        Const.main_window.radioButton_3.setText("Fill the gaps")
-        Const.main_window.radioButton_3.setStyleSheet("color: rgb(255, 255, 255);")
-
-        Const.main_window.verticalLayout_2.addWidget(Const.main_window.radioButton_3)
-
-        Const.main_window.radioButton_4 = QRadioButton(Const.main_window)
-        Const.main_window.radioButton_4.setObjectName("radioButton_4")
-        Const.main_window.radioButton_4.setGeometry(QRect(20, 650, 100, 50))
-        Const.main_window.radioButton_4.setText("Match records")
-        Const.main_window.radioButton_4.setStyleSheet("color: rgb(255, 255, 255);")
-
-        Const.main_window.verticalLayout_2.addWidget(Const.main_window.radioButton_4)
+        # Const.main_window.radioButton_3 = QRadioButton(Const.main_window)
+        # Const.main_window.radioButton_3.setObjectName("radioButton_3")
+        # Const.main_window.radioButton_3.setGeometry(QRect(20, 600, 100, 50))
+        # Const.main_window.radioButton_3.setText("Fill the gaps")
+        # Const.main_window.radioButton_3.setStyleSheet("color: rgb(255, 255, 255);")
+        #
+        # Const.main_window.verticalLayout_2.addWidget(Const.main_window.radioButton_3)
+        #
+        # Const.main_window.radioButton_4 = QRadioButton(Const.main_window)
+        # Const.main_window.radioButton_4.setObjectName("radioButton_4")
+        # Const.main_window.radioButton_4.setGeometry(QRect(20, 650, 100, 50))
+        # Const.main_window.radioButton_4.setText("Match records")
+        # Const.main_window.radioButton_4.setStyleSheet("color: rgb(255, 255, 255);")
+        #
+        # Const.main_window.verticalLayout_2.addWidget(Const.main_window.radioButton_4)
 
         Const.main_window.data_box.addLayout(Const.main_window.verticalLayout_2)
 
@@ -263,10 +264,32 @@ class LoadedDataWindowHandler(BaseHandler):
 
         Const.main_window.verticalLayout.addWidget(Const.main_window.iteration_size)
 
+        ### columns
+
+        Const.main_window.translate_from_list = QListView()
+        Const.main_window.translate_to_list = QListView()
+
+        Const.main_window.translate_from_model = QtGui.QStandardItemModel()
+        Const.main_window.translate_to_model = QtGui.QStandardItemModel()
+
+        Const.main_window.translate_from_list.setModel(Const.main_window.translate_from_model)
+        Const.main_window.translate_to_list.setModel(Const.main_window.translate_to_model)
+
+        Const.main_window.translate_from_list.setStyleSheet("color: rgb(255, 255, 255);")
+        Const.main_window.translate_to_list.setStyleSheet("color: rgb(255, 255, 255);")
+
+        Const.main_window.translate_from_list.setGeometry(650, 500, 150, 200)
+        Const.main_window.translate_to_list.setGeometry(810, 500, 150, 200)
+
+        Const.main_window.verticalLayout.addWidget(Const.main_window.translate_from_list)
+        Const.main_window.verticalLayout.addWidget(Const.main_window.translate_to_list)
+
+        cls.set_from_and_to_models()
+
         Const.main_window.horizontalLayout.addLayout(Const.main_window.verticalLayout)
 
         ###
-        Const.main_window.pushButton = LeftMenuButton("Start Game!", Const.main_window)
+        Const.main_window.pushButton = BasicMenuButton("Start Game!", Const.main_window)
 
         Const.main_window.pushButton.setObjectName("Start Game")
 
@@ -281,15 +304,13 @@ class LoadedDataWindowHandler(BaseHandler):
 
         Const.main_window.main_menu_box.addLayout(Const.main_window.data_box, 5)
 
-        # print(find_water)
-        Const.main_window.mode_radios = [Const.main_window.radioButton_4, Const.main_window.radioButton_3,
-                                         Const.main_window.radioButton_2,
-                                         Const.main_window.radioButton]
+        Const.main_window.mode_radios = [
+            Const.main_window.radioButton_2,
+            Const.main_window.radioButton]
 
         Const.main_window.task_attributes.extend([Const.main_window.pushButton, Const.main_window.horizontalLayout,
                                                   Const.main_window.verticalLayout, Const.main_window.batchSize,
                                                   Const.main_window.label_batch, Const.main_window.verticalLayout_2,
-                                                  Const.main_window.radioButton_4, Const.main_window.radioButton_3,
                                                   Const.main_window.radioButton_2, Const.main_window.radioButton,
                                                   Const.main_window.search_bar, Const.main_window.filters_checkbox,
                                                   Const.main_window.apply_filters_push_button,
@@ -302,9 +323,8 @@ class LoadedDataWindowHandler(BaseHandler):
                                                   Const.main_window.show_all_button,
                                                   Const.main_window.iteration_size,
                                                   Const.main_window.label_iteration_size,
-                                                  Const.main_window.save_current_view_button,
-                                                  ])
 
+                                                  ])
 
     @classmethod
     def refresh_views_list(cls):
@@ -315,19 +335,36 @@ class LoadedDataWindowHandler(BaseHandler):
 
             views_names = {}
 
-        print(views_names)
         Const.main_window.view_list_model.removeRows(0, Const.main_window.view_list_model.rowCount())
 
         for key, value in views_names.items():
             size = len(value.get('selected_records', []))
             text_value = f"{key} ({size})"
-            print(text_value)
+
             item = QtGui.QStandardItem(text_value)
             item.real_name = key
 
             Const.main_window.view_list_model.appendRow(item)
 
         Const.main_window.view_list.setModel(Const.main_window.view_list_model)
+
+    @classmethod
+    def set_from_and_to_models(cls):
+
+        columns = Const.parser.config.words + Const.parser.config.sentences
+        if len(columns) == 0:
+            columns = Const.parser.headers_to_numbers.keys()
+        for column in columns:
+            item = QtGui.QStandardItem(column)
+            item.real_name = column
+            item_1 = QtGui.QStandardItem(column)
+            item_1.real_name = column
+
+            Const.main_window.translate_from_model.appendRow(item)
+            Const.main_window.translate_to_model.appendRow(item_1)
+
+        Const.main_window.translate_from_list.setModel(Const.main_window.translate_from_model)
+        Const.main_window.translate_to_list.setModel(Const.main_window.translate_to_model)
 
     @classmethod
     def fill_filter_preview_table(cls):
@@ -486,10 +523,8 @@ class LoadedDataWindowHandler(BaseHandler):
         Const.batch_size = int(Const.main_window.batchSize.text())
 
         if Const.iter_size > Const.batch_size:
-            print("itersize cant be bigger than batch size")
             return False, "itersize cant be bigger than batch size"
         if Const.batch_size > len(Const.main_window.all_selected_records):
-            print(f"you need at least {Const.batch_size} record selected.")
             return False, f"you need at least {Const.batch_size} records selected."
         return True, ""
 
@@ -516,13 +551,11 @@ class LoadedDataWindowHandler(BaseHandler):
             new_json_file = json_file
         try:
             with open(config.json_file, "w") as out_file:
-                print(new_json_file)
                 json.dump(new_json_file, out_file, indent=4)
         except FileNotFoundError:
-            print("No proper file location")
+            display_error_window("No proper file location")
             return False
         cls.refresh_views_list()
-
 
     @classmethod
     def get_selected_view(cls):
@@ -548,10 +581,10 @@ class LoadedDataWindowHandler(BaseHandler):
             new_json_file = json_file
         try:
             with open(config.json_file, "w") as out_file:
-                print(new_json_file)
                 json.dump(new_json_file, out_file, indent=4)
         except FileNotFoundError:
-            print("No proper file location")
+
+            display_error_window("No proper file location")
             return False
         cls.refresh_views_list()
 
@@ -566,7 +599,7 @@ class LoadedDataWindowHandler(BaseHandler):
             # cls.show_me_all()
             # Const.main_window.currently_used_records = Const.parser.all_records
             Const.main_window.all_selected_records = list(set(view_to_apply.get("selected_records", [])))
-            print(Const.main_window.all_selected_records)
+
             # cls.show_me_all()
             is_set = False
             if chosen_radio := view_to_apply.get("game_mode"):
@@ -591,15 +624,23 @@ class LoadedDataWindowHandler(BaseHandler):
             return
 
     @classmethod
+    def get_translate_from_to(cls):
+        selected = Const.main_window.translate_from_list.currentIndex().row()
+        selected_1 = Const.main_window.translate_to_list.currentIndex().row()
+
+        return Const.main_window.translate_from_model.item(selected,
+                                                           0).real_name, Const.main_window.translate_to_model.item(
+            selected_1, 0).real_name
+
+    @classmethod
     def start_game(cls):
         cls.synchronise_checked()
         status, msg = cls.collect_game_data()
+        _from, _to = cls.get_translate_from_to()
         if status:
             for radio in Const.main_window.mode_radios:
                 if radio.isChecked():
-                    Const.main_window.start_game(mode=radio.text())
+                    Const.main_window.start_game(mode=radio.text(), _from=_from, _to=_to)
         else:
             playsound("sounds/failure.mp3", False)
-            dlg = ErrorDialog(msg)
-            dlg.setWindowTitle("ERROR")
-            dlg.exec_()
+            display_error_window(msg)

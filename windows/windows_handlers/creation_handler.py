@@ -1,16 +1,17 @@
 import json
-from dataclasses import asdict
+
 
 from PySide6 import QtWidgets
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import QFileDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QLabel, QTableWidgetItem, QWidget
 from playsound import playsound
 
+from error_handling.basic_error_window import display_error_window
 from parsers.ApkgParser import ApkgGrandParser
 from parsers.CSVParser import CSVGrandParser
 from parsers.ExcelParser import ExcelGrandParser
 from utils.CONSTANTS import StagesOrdering, UFTIcons
-from utils.global_access_classes import Const, CurrentlyEdited, LeftMenuButton, Config
+from utils.global_access_classes import Const, CurrentlyEdited, BasicMenuButton, Config
 from windows.windows_handlers.base_handler import BaseHandler
 import pandas as pd
 
@@ -28,12 +29,12 @@ class FirstViewWindowHandler(BaseHandler):
                 print("already Deleted")
 
         Const.main_window.main_menu_box = QVBoxLayout(Const.main_window)
-        Const.main_window.load_raw_button = LeftMenuButton("Load raw data", Const.main_window)
+        Const.main_window.load_raw_button = BasicMenuButton("Load raw data", Const.main_window)
         Const.main_window.load_raw_button.clicked.connect(lambda: cls.load_config_or_raw_data(is_raw=True))
-        Const.main_window.new_config_button = LeftMenuButton("New Configuration (pick CSV or Excel format)",
-                                                             Const.main_window)
+        Const.main_window.new_config_button = BasicMenuButton("New Configuration (pick CSV or Excel format)",
+                                                              Const.main_window)
         Const.main_window.new_config_button.clicked.connect(lambda: cls.create_new_config())
-        Const.main_window.load_config_button = LeftMenuButton("Load known config", Const.main_window)
+        Const.main_window.load_config_button = BasicMenuButton("Load known config", Const.main_window)
         Const.main_window.load_config_button.clicked.connect(lambda: cls.load_config_or_raw_data(is_raw=False))
         Const.main_window.main_menu_box.addWidget(Const.main_window.load_raw_button, )
         Const.main_window.main_menu_box.addWidget(Const.main_window.load_config_button, )
@@ -54,7 +55,7 @@ class FirstViewWindowHandler(BaseHandler):
             path = QtWidgets.QFileDialog.getOpenFileName(Const.main_window,
                                                          'Hey! Select a File',
                                                          filter="data files (*.xlsx *.csv *.apkg)")[0]
-            print(path)
+
             DataManagementView.initiate_task(path)
         except Exception as e:
             print(e)
@@ -81,8 +82,9 @@ class FirstViewWindowHandler(BaseHandler):
                 parser = extensions_to_parsers[extension]
 
         except ValueError:
-            print(path)
-            print("I CANT PARSE THIS FILE EXTENSION")
+
+            display_error_window(f"I CANT PARSE THIS FILE EXTENSION {path}")
+
             return
         except KeyError:
             pass
@@ -127,7 +129,7 @@ class FirstViewWindowHandler(BaseHandler):
                 parser = extensions_to_parsers[extension]
 
         except ValueError:
-            print("I CANT PARSE THIS FILE EXTENSION")
+            display_error_window("I CANT PARSE THIS FILE EXTENSION")
             return
         except KeyError:
             pass
@@ -171,7 +173,7 @@ class DataManagementView(BaseHandler):
         # add worksheet_choice
         if excel_file_dir.endswith(".xlsx"):
             tabs = pd.ExcelFile(excel_file_dir).sheet_names
-            print(tabs)
+
             df = pd.read_excel(excel_file_dir, tabs[0])
         else:
             df = pd.read_csv(excel_file_dir)
@@ -246,16 +248,16 @@ class DataManagementView(BaseHandler):
         Const.main_window.tool_tip.setStyleSheet("color: rgb(255, 255, 255);")
         Const.main_window.buttons_in_info_layout_box = QHBoxLayout(Const.main_window)
         Const.main_window.task_attributes.append(Const.main_window.buttons_in_info_layout_box)
-        Const.main_window.return_button = LeftMenuButton("Main menu", Const.main_window)
+        Const.main_window.return_button = BasicMenuButton("Main menu", Const.main_window)
         Const.main_window.return_button.clicked.connect(lambda: cls.return_to_menu())
         Const.main_window.task_attributes.append(Const.main_window.return_button)
-        Const.main_window.back_button = LeftMenuButton("Reverse Action", Const.main_window)
+        Const.main_window.back_button = BasicMenuButton("Reverse Action", Const.main_window)
         Const.main_window.task_attributes.append(Const.main_window.back_button)
         Const.main_window.back_button.clicked.connect(lambda: cls.reverse_append_record())
-        Const.main_window.add_record_button = LeftMenuButton("Add Selection", Const.main_window)
+        Const.main_window.add_record_button = BasicMenuButton("Add Selection", Const.main_window)
         Const.main_window.task_attributes.append(Const.main_window.add_record_button)
         Const.main_window.add_record_button.clicked.connect(lambda: cls.append_record())
-        Const.main_window.next_button = LeftMenuButton(f"Next step {UFTIcons.RIGHT_ARROW}", Const.main_window)
+        Const.main_window.next_button = BasicMenuButton(f"Next step {UFTIcons.RIGHT_ARROW}", Const.main_window)
         Const.main_window.task_attributes.append(Const.main_window.next_button)
         Const.main_window.next_button.clicked.connect(lambda: cls.append_to_config(2))
         Const.main_window.orientation_buttons = [Const.main_window.return_button, Const.main_window.add_record_button,
@@ -309,15 +311,15 @@ class DataManagementView(BaseHandler):
             proper_items = ""
             setattr(CurrentlyEdited.config_in_progress, f"{attribute}_path", "")
             if Const.main_window.chosen_label.text() != "None":
-                print(Const.main_window.loaded_excel_headers)
+
                 if Const.main_window.chosen_label.text() not in Const.main_window.loaded_excel_headers:
-                    print("It's not correct column name!")
+                    display_error_window(f"'{Const.main_window.chosen_label.text()}' is not correct column name!")
                     return
                 path = QtWidgets.QFileDialog.getExistingDirectory(Const.main_window,
                                                                   f'Hey! Select a select directory for {attribute} files', )
 
                 if path == "":
-                    print("its must be a currect path!")
+                    display_error_window("it must be a correct path!")
                     return
                 proper_items = Const.main_window.chosen_label.text()
                 setattr(CurrentlyEdited.config_in_progress, f"{attribute}_path", path)
@@ -331,10 +333,11 @@ class DataManagementView(BaseHandler):
             list(set(proper_items))
             for item in proper_items:
                 if item not in Const.main_window.loaded_excel_headers:
-                    print(f"'{item}' is not proper column name!!")
+                    display_error_window(f"'{item}' is not proper column name!!")
+
                     return
             if len(proper_items) < constrain:
-                print(f"There should be at least {constrain} columns selected!")
+                display_error_window(f"There should be at least {constrain} columns selected!")
                 return
 
         setattr(CurrentlyEdited.config_in_progress, attribute, proper_items)
@@ -350,15 +353,13 @@ class DataManagementView(BaseHandler):
         if StagesOrdering.creation_position in StagesOrdering.single_choice_creation:
             Const.main_window.chosen_label.show()
             Const.main_window.small_table.hide()
-            # Const.main_window.add_record_button.hide()
+
         else:
             Const.main_window.chosen_label.hide()
             Const.main_window.small_table.show()
-            # Const.main_window.add_record_button.show()
 
         if StagesOrdering.creation_position == 5:
             Const.main_window.next_button.setText("Finish!")
-            # Const.main_window.next_button.clicked.connect(lambda: cls.save_created_json(main))
 
         Const.main_window.tool_tip.setText(description)
 
@@ -369,7 +370,7 @@ class DataManagementView(BaseHandler):
             Const.main_window, "Save configuration file", f"{CurrentlyEdited.config_in_progress.file_name}json",
             "JSON Files (*.json)")
         if path[0] == '':
-            print("Its not correct file name or location!")
+            display_error_window(f"{path} is not correct file name or location!")
             return False
         config_file = {
             **{k: getattr(CurrentlyEdited.config_in_progress, k) for k in StagesOrdering.CONFIG_CREATION_STAGES},
@@ -381,6 +382,6 @@ class DataManagementView(BaseHandler):
             with open(path[0], "w") as out_file:
                 json.dump(config_file, out_file, indent=4)
         except FileNotFoundError:
-            print("No proper file location")
+            display_error_window("There is not proper path to file")
             return False
         return True

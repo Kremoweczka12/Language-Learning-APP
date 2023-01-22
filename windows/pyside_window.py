@@ -1,6 +1,7 @@
+from PySide6 import QtGui
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QMainWindow, QHBoxLayout, QWidget, QGridLayout, QVBoxLayout
-from utils.global_access_classes import Const, LeftMenuButton, ScrollLabel
+from utils.global_access_classes import Const, BasicMenuButton, ScrollLabel
 from windows.windows_handlers.creation_handler import FirstViewWindowHandler
 from windows.windows_handlers.excercise_handler import FallingWindowsHandler, ABCDWindowsHandler
 
@@ -12,15 +13,15 @@ class MainWindow(QMainWindow):
         for attribute in self.task_attributes:
             attribute.deleteLater()
 
-    def start_game(self, mode):
-        print(mode)
+    def start_game(self, mode, _from, _to):
+
 
         handler_mode = self.modes.get(mode, ABCDWindowsHandler)
         handler_mode.kill_exercise_task()
-        self.restart_button = LeftMenuButton("Restart", self)
+        self.restart_button = BasicMenuButton("Restart", self)
         self.restart_button.clicked.connect(lambda: handler_mode.restart_batch(is_full_restart=True))
 
-        self.kill_button = LeftMenuButton("Kill Process", self)
+        self.kill_button = BasicMenuButton("Kill Process", self)
         self.kill_button.clicked.connect(lambda: handler_mode.reload_data_display_mode())
 
         self.left_height_box = QGridLayout(self)
@@ -40,11 +41,11 @@ class MainWindow(QMainWindow):
         self.word_info.setStyleSheet("color: rgb(255, 255, 255); font-size: 16pt;")
 
         policy = self.word_info.sizePolicy()
-        self.next_word_button = LeftMenuButton("Next Word", self)
+        self.next_word_button = BasicMenuButton("Next Word", self)
         self.next_word_button.setMaximumHeight(int(self.height() / 7))
-        self.hint_button = LeftMenuButton("Give me a hint", self)
+        self.hint_button = BasicMenuButton("Give me a hint", self)
         self.hint_button.setMaximumHeight(int(self.height() / 7))
-        self.display_details = LeftMenuButton("Display details.", self)
+        self.display_details = BasicMenuButton("Display details.", self)
         self.display_details.setMaximumHeight(int(self.height() / 7))
         self.right_side_infos.addWidget(self.word_info)
         self.right_side_infos.addWidget(self.next_word_button)
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow):
         self.all_boxes.addLayout(self.right_side_features, 4)
         # add mapping to proper handling
         # FallingWindowsHandler.initiate_task()
-        handler_mode.initiate_task()
+        handler_mode.initiate_task(_from, _to)
         self.setCentralWidget(QWidget(self))
 
         self.centralWidget().setLayout(self.all_boxes)
@@ -77,10 +78,12 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         Const.main_window = self
-        self.setWindowTitle("My App")
+        self.setWindowTitle("PRO Lingua")
         self.setFixedSize(QSize(1280, 720))
+        self.setWindowIcon(QtGui.QIcon("icons/brain.png"))
 
         # self.start_game("falling blocks")
+
         FirstViewWindowHandler.initiate_task()
 
         self.setStyleSheet("background-color: #2D2D2D;")

@@ -7,8 +7,9 @@ import playsound
 from PySide6.QtCore import QPropertyAnimation, QPoint, Qt
 from PySide6.QtWidgets import QLabel, QPushButton, QSizePolicy, QScrollArea, QGroupBox, QFormLayout, QVBoxLayout
 
+from error_handling.basic_error_window import display_error_window
 from utils.CONSTANTS import StyleSheets
-from utils.global_access_classes import Const, LeftMenuButton, play_safe_sound
+from utils.global_access_classes import Const, BasicMenuButton, play_safe_sound
 from windows.windows_handlers.base_handler import BaseHandler
 from windows.windows_handlers.creation_handler import FirstViewWindowHandler
 
@@ -26,12 +27,23 @@ class ExerciseBaseHandler(BaseHandler):
     is_game_won = False
 
     @classmethod
+    def set_compare_to_and_compare_from(cls, _to, _from):
+        parser = Const.parser
+        cls.compare_to = parser.remove_wrong_letters(_to)
+        cls.compare_from = parser.remove_wrong_letters(_from)
+
+
+    @classmethod
     def reload_data_display_mode(cls):
         cls.labels_list = []
         cls.buttons_list = []
         cls.buttons = []
         cls.game_record = []
         cls.failed_words = []
+        cls.already_used = []
+        cls.unused = []
+
+        Const.current_batch = 1
 
         super().kill_exercise_task(spare_loading_parts=True)
         FirstViewWindowHandler.initiate_task()
@@ -55,27 +67,31 @@ class ExerciseBaseHandler(BaseHandler):
                              for sentence in config.sentences])
         sentences = Const.parser.put_space_bars(sentences)
         words = Const.parser.put_space_bars(words)
-        word_label_text = f"{words}\nSample usages:{sentences}"
+
         Const.main_window.word_info.show()
         Const.main_window.word_info.setText(words, sentences)
 
     @classmethod
     def update_sound_consts(cls, record):
+
         record_dict = asdict(record)
 
         parser = Const.parser
         config = parser.config
-        word_sound_file_name = record_dict[parser.remove_wrong_letters(config.words_sounds.lower())]
-        if word_sound_file_name.startswith("[sound:"):
-            word_sound_file_name = word_sound_file_name[7:-1]
+        try:
+            word_sound_file_name = record_dict[parser.remove_wrong_letters(config.words_sounds.lower())]
+            if word_sound_file_name.startswith("[sound:"):
+                word_sound_file_name = word_sound_file_name[7:-1]
 
-        Const.temp_sound_path_word = f"{config.words_sounds_path}/{word_sound_file_name}"
+            Const.temp_sound_path_word = f"{config.words_sounds_path}/{word_sound_file_name}"
 
-        sentence_sound_file_name = record_dict[parser.remove_wrong_letters(config.sentences_sounds.lower())]
-        if sentence_sound_file_name.startswith("[sound:"):
-            sentence_sound_file_name = sentence_sound_file_name[7:-1]
+            sentence_sound_file_name = record_dict[parser.remove_wrong_letters(config.sentences_sounds.lower())]
+            if sentence_sound_file_name.startswith("[sound:"):
+                sentence_sound_file_name = sentence_sound_file_name[7:-1]
 
-        Const.temp_sound_path_sentence = f"{config.sentences_sounds_path}/{sentence_sound_file_name}"
+            Const.temp_sound_path_sentence = f"{config.sentences_sounds_path}/{sentence_sound_file_name}"
+        except KeyError as e:
+            pass
         return record_dict
 
     @classmethod
@@ -96,11 +112,11 @@ class ExerciseBaseHandler(BaseHandler):
             record_dict = asdict(record)
             label_text = f"'{record_dict[cls.compare_from]}' matches with: '{record_dict[cls.compare_to]}'"
             cls.labels_list.append(QLabel(label_text))
-            button = LeftMenuButton("More...", Const.main_window)
+            button = BasicMenuButton("More...", Const.main_window)
             button.clicked.connect(lambda checked=False, device=record: cls.display_info_in_label_from_record(device))
             button.setMaximumHeight(int(Const.main_window.height() / 10))
             cls.buttons_list.append(button)
-            print(i)
+
             Const.main_window.form_layout.addRow(cls.labels_list[i], cls.buttons_list[i])
 
         for label in cls.labels_list:
@@ -228,15 +244,14 @@ class FallingWindowsHandler(ExerciseBaseHandler):
     def pick_answer_action(cls, button):
         if asdict(cls.currently_correct)[cls.compare_from] == button.text():
             playsound.playsound("sounds/correct.wav", False)
-            print("correct!!")
+
             cls.select_records_for_iter()
             cls.restart_animations()
         else:
             playsound.playsound("sounds/failure.mp3", False)
             cls.failed_words.append(cls.currently_correct.ID)
             cls.failed_words = list(set(cls.failed_words))
-            print(cls.failed_words)
-            print("FALSE")
+
             cls.select_records_for_iter()
             cls.restart_animations()
 
@@ -246,8 +261,7 @@ class FallingWindowsHandler(ExerciseBaseHandler):
             playsound.playsound("sounds/failure.mp3", False)
             cls.failed_words.append(cls.currently_correct.ID)
             cls.failed_words = list(set(cls.failed_words))
-            print(cls.failed_words)
-            print("FALSE")
+
             cls.select_records_for_iter()
             cls.restart_animations()
 
@@ -343,14 +357,15 @@ class FallingWindowsHandler(ExerciseBaseHandler):
             anim.start()
 
     @classmethod
-    def initiate_task(cls):
+    def initiate_task(cls, _from, _to):
+        cls.set_compare_to_and_compare_from(_to, _from)
         Const.main_window.hint_button.hide()
         if hasattr(Const.main_window, "task_attributes") and Const.main_window.task_attributes is not []:
             try:
                 cls.kill_exercise_task()
             except RuntimeError:
                 Const.main_window.task_attributes = []
-                print("already Deleted")
+
         Const.current_batch = 1
         cls.game_record = [record for record in Const.parser.all_records
                            if record.ID in Const.main_window.all_selected_records]
@@ -371,10 +386,10 @@ class FallingWindowsHandler(ExerciseBaseHandler):
         Const.main_window.left_height_box.addWidget(Const.main_window.batch_and_iter, 1, 0, )
 
         cls.number_of_batches = ceil(len(cls.game_record) / Const.batch_size)
-        print(cls.number_of_batches)
+
         cls.create_buttons()
 
-        print("intiation finished")
+
 
 
 class ABCDWindowsHandler(ExerciseBaseHandler):
@@ -448,9 +463,6 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
     @classmethod
     def pick_answer_action(cls, button):
         if asdict(cls.currently_correct)[cls.compare_from] == button.text():
-
-            print("correct!!")
-
             playsound.playsound("sounds/correct.wav", False)
             # cls.select_records_for_iter()
             cls.colour_buttons()
@@ -462,9 +474,8 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
             cls.colour_buttons()
             cls.failed_words.append(cls.currently_correct.ID)
             cls.failed_words = list(set(cls.failed_words))
-            print(cls.failed_words)
-            print("fail")
-            # cls.select_records_for_iter()
+
+
 
         Const.main_window.next_word_button.show()
         Const.main_window.display_details.show()
@@ -502,7 +513,7 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
         for button in cls.buttons:
             button.setStyleSheet(StyleSheets.FALLING_BUTTON_STYLE_SHEET)
         if len(cls.unused) == 0:
-            print("end of batch")
+
 
             Const.current_batch += 1
 
@@ -552,13 +563,14 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
         cls.update_sound_consts(record=cls.currently_correct)
 
     @classmethod
-    def initiate_task(cls):
+    def initiate_task(cls, _from, _to):
+        cls.set_compare_to_and_compare_from(_to, _from)
         if hasattr(Const.main_window, "task_attributes") and Const.main_window.task_attributes is not []:
             try:
                 cls.kill_exercise_task()
             except RuntimeError:
                 Const.main_window.task_attributes = []
-                print("already Deleted")
+
         Const.current_batch = 1
         cls.game_record = [record for record in Const.parser.all_records
                            if record.ID in Const.main_window.all_selected_records]
@@ -586,4 +598,4 @@ class ABCDWindowsHandler(ExerciseBaseHandler):
 
         cls.create_buttons()
 
-        print("intiation finished")
+
